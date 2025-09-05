@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landscape UI Theme Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .theme-viewer, .builder-preview {
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 800 / 480;
+            border: 1px solid #d1d5db;
+        }
+        .theme-viewer {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .tab-active {
+            border-bottom-color: #4f46e5;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        .builder-controls {
+            max-height: 480px;
+            overflow-y: auto;
+        }
+        /* Simple modal for program feedback */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            min-width: 300px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased">
+
+    <div id="app" class="container mx-auto p-4 md:p-8">
+
+        <!-- Header and Tabs -->
+        <header class="mb-8 bg-white p-4 rounded-lg shadow-sm">
+            <h1 class="text-3xl font-bold text-gray-900">Landscape UI Theme Builder</h1>
+            <p class="text-gray-600 mt-1">Create and preview simple, multi-pane UI themes for an 800x480 display.</p>
+            <nav class="mt-4 border-b border-gray-200">
+                <ul class="flex -mb-px">
+                    <li class="mr-1">
+                        <a href="#" class="tab inline-block py-2 px-4 border-b-2 border-transparent" data-tab="index">Index</a>
+                    </li>
+                    <li class="mr-1">
+                        <a href="#" class="tab inline-block py-2 px-4 border-b-2 border-transparent" data-tab="builder">Builder</a>
+                    </li>
+                    <li class="mr-1">
+                        <a href="#" class="tab inline-block py-2 px-4 border-b-2 border-transparent" data-tab="viewer">Viewer</a>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Index Page -->
+            <div id="index" class="page-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h2 class="text-2xl font-semibold mb-3">UI Builder</h2>
+                        <p class="mb-4">Use the Builder tab to design your interface. You can add multiple pages, define layouts (single or dual-pane), and add content like lists or text. Choose from pre-made templates like "iPod Classic" or "Zune" to get started, then customize colors and content to fit your vision.</p>
+                        <button class="tab-link bg-indigo-600 text-white font-bold py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300" data-tab="builder">Go to Builder</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h2 class="text-2xl font-semibold mb-3">Theme Viewer</h2>
+                        <p class="mb-4">Once you've generated a JSON file from the builder, head over to the Viewer tab. Paste your JSON code into the text area and click "Load Theme" to see an interactive preview of your creation in the 800x480 viewport. This lets you test the navigation and feel of your UI.</p>
+                         <button class="tab-link bg-indigo-600 text-white font-bold py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300" data-tab="viewer">Go to Viewer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Builder Page -->
+            <div id="builder" class="page-content hidden">
+                 <div class="flex flex-wrap md:flex-nowrap gap-8 items-start">
+                    <!-- Controls -->
+                    <div class="w-full md:w-1/3 bg-white p-4 rounded-lg shadow-sm builder-controls">
+                        <h3 class="text-xl font-bold mb-4 border-b pb-2">Controls</h3>
+                        
+                        <!-- Templates -->
+                        <div class="mb-4">
+                            <label for="template-select" class="block text-sm font-medium text-gray-700">Load Template</label>
+                            <select id="template-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="custom">Custom</option>
+                                <option value="ipod">iPod Classic Style</option>
+                                <option value="zune">Zune Style</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Global Settings -->
+                        <div class="mb-4 p-3 border rounded-md">
+                            <h4 class="font-semibold mb-2">Global Styles</h4>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <label for="global-bg">Background</label>
+                                    <input type="color" id="global-bg" value="#ffffff" class="w-full h-8 rounded">
+                                </div>
+                                <div>
+                                    <label for="global-text">Text</label>
+                                    <input type="color" id="global-text" value="#000000" class="w-full h-8 rounded">
+                                </div>
+                                <div>
+                                    <label for="global-highlight">Highlight Text</label>
+                                    <input type="color" id="global-highlight" value="#ffffff" class="w-full h-8 rounded">
+                                </div>
+                                 <div>
+                                    <label for="global-accent">Highlight BG</label>
+                                    <input type="color" id="global-accent" value="#007aff" class="w-full h-8 rounded">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Page Management -->
+                         <div class="mb-4 p-3 border rounded-md">
+                            <h4 class="font-semibold mb-2">Pages</h4>
+                            <div id="pages-container" class="space-y-4"></div>
+                            <button id="add-page" class="mt-2 w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300 text-sm">Add Page</button>
+                        </div>
+                        
+                        <!-- Content Blocks -->
+                        <div class="mb-4 p-3 border rounded-md">
+                            <h4 class="font-semibold mb-2">Content Blocks (for `>>`)</h4>
+                            <div id="content-blocks-container" class="space-y-4"></div>
+                            <button id="add-content-block" class="mt-2 w-full bg-teal-500 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-600 transition duration-300 text-sm">Add Content Block</button>
+                        </div>
+
+                        <!-- Programs -->
+                        <div class="mb-4 p-3 border rounded-md">
+                            <h4 class="font-semibold mb-2">Programs (for `>>>`)</h4>
+                             <div id="programs-container" class="space-y-4"></div>
+                            <button id="add-program" class="mt-2 w-full bg-purple-500 text-white font-bold py-2 px-4 rounded-md hover:bg-purple-600 transition duration-300 text-sm">Add Program</button>
+                        </div>
+
+                        <!-- JSON Output -->
+                        <div class="mt-6">
+                             <button id="generate-json" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition duration-300">Generate JSON</button>
+                             <textarea id="json-output" class="mt-2 w-full h-48 p-2 border rounded-md bg-gray-50 font-mono text-xs" readonly></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="w-full md:w-2/3 flex flex-col items-center">
+                        <h3 class="text-xl font-bold mb-4">Preview</h3>
+                        <div id="builder-preview" class="builder-preview bg-white rounded-lg flex items-center justify-center text-gray-400">
+                           Your live preview will appear here.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Viewer Page -->
+            <div id="viewer" class="page-content hidden">
+                 <div class="flex flex-wrap md:flex-nowrap gap-8">
+                     <div class="w-full md:w-1/3">
+                        <h3 class="text-xl font-bold mb-4">JSON Input</h3>
+                        <textarea id="json-input" class="w-full h-96 p-2 border rounded-md shadow-sm font-mono text-xs" placeholder="Paste your generated JSON here..."></textarea>
+                        <button id="load-theme" class="mt-4 w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300">Load Theme</button>
+                     </div>
+                      <div class="w-full md:w-2/3 flex flex-col items-center">
+                        <h3 class="text-xl font-bold mb-4">Interactive Viewer</h3>
+                        <div id="theme-viewer" class="theme-viewer bg-white rounded-lg flex items-center justify-center text-gray-400">
+                           Your interactive theme will be rendered here.
+                        </div>
+                    </div>
+                 </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for program messages -->
+    <div id="message-modal" class="modal-overlay hidden">
+        <div class="modal-content shadow-lg">
+            <p id="modal-text" class="mb-4">Message goes here.</p>
+            <button id="modal-close" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-md hover:bg-indigo-700">Close</button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const appState = {
+                globalSettings: {
+                    backgroundColor: '#ffffff', textColor: '#000000',
+                    highlightColor: '#ffffff', accentBgColor: '#007aff'
+                },
+                pages: [],
+                contentBlocks: {},
+                programs: {}
+            };
+
+            const templates = {
+                ipod: {
+                    globalSettings: {
+                        backgroundColor: '#ffffff', textColor: '#000000',
+                        highlightColor: '#ffffff', accentBgColor: '#007aff'
+                    },
+                    pages: [{
+                        id: 'mainMenu', name: 'Main Menu', layout: 'twoPaneVertical',
+                        panes: [{
+                            id: 'pane1', type: 'text', content: 'iPod',
+                            backgroundColor: '#ffffff', textColor: '#000000',
+                            flex: 0.4, fontSize: 28, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle'
+                        }, {
+                            id: 'pane2', type: 'list',
+                            content: 'Music > musicMenu\nPhotos > photosMenu\nExtras\nSettings\nNow Playing > nowPlaying',
+                            backgroundColor: '#ffffff', textColor: '#000000',
+                            flex: 0.6, fontSize: 24, fontWeight: 'bold', textAlign: 'left', listOrientation: 'vertical'
+                        }]
+                    }, {
+                        id: 'musicMenu', name: 'Music Menu', layout: 'twoPaneVertical',
+                        panes: [{
+                            id: 'pane1', type: 'list',
+                            content: 'Artists >> artistList\nAlbums >> albumList\nShuffle Songs >>> shuffle\n< Back > mainMenu',
+                            backgroundColor: '#ffffff', textColor: '#000000',
+                            flex: 0.4, fontSize: 28, fontWeight: 'bold', textAlign: 'left', listOrientation: 'vertical'
+                        }, {
+                            id: 'pane2', type: 'text', content: 'Select an option',
+                            backgroundColor: '#ffffff', textColor: '#aaaaaa',
+                            flex: 0.6, fontSize: 24, fontWeight: 'normal', textAlign: 'center', verticalAlign: 'middle'
+                        }]
+                    }, {
+                        id: 'photosMenu', name: 'Photos Menu', layout: 'twoPaneVertical',
+                        panes: [
+                            { id: 'pane1', type: 'text', content: 'Photos', backgroundColor: '#ffffff', textColor: '#000000', flex: 0.4, fontSize: 28, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle' },
+                            { id: 'pane2', type: 'text', content: 'Photo library is empty.\n\n< Back > mainMenu', backgroundColor: '#ffffff', textColor: '#000000', flex: 0.6, fontSize: 20, fontWeight: 'normal', textAlign: 'left', paddingY: 5 }
+                        ]
+                    }, {
+                       id: 'nowPlaying', name: 'Now Playing', layout: 'twoPaneVertical',
+                        panes: [
+                            { id: 'pane1', type: 'text', content: '[ Album Art ]', backgroundColor: '#e0e0e0', textColor: '#555555', flex: 0.4, fontSize: 20, fontWeight: 'normal', textAlign: 'center', verticalAlign: 'middle' },
+                            { id: 'pane2', type: 'text', content: 'Now Playing...\nSong Title\nArtist Name\n\n< Back > mainMenu', backgroundColor: '#ffffff', textColor: '#000000', flex: 0.6, fontSize: 20, fontWeight: 'normal', textAlign: 'left', verticalAlign: 'middle' }
+                        ]
+                    }],
+                    contentBlocks: {
+                        "artistList": {
+                            type: "list",
+                            content: "Artist 1\nArtist 2\nArtist 3",
+                            backgroundColor: "#ffffff", textColor: "#000000",
+                            fontSize: 22, fontWeight: "normal", textAlign: "left", listOrientation: "vertical"
+                        },
+                        "albumList": {
+                            type: "list",
+                            content: "Album A\nAlbum B",
+                             backgroundColor: "#ffffff", textColor: "#000000",
+                            fontSize: 22, fontWeight: "normal", textAlign: "left", listOrientation: "vertical"
+                        }
+                    },
+                    programs: {
+                        "shuffle": "showMessage('Shuffling all songs!');"
+                    }
+                },
+                zune: {
+                    globalSettings: {
+                        backgroundColor: '#1e1e1e', textColor: '#ffffff',
+                        highlightColor: '#ffffff', accentBgColor: '#e8336a'
+                    },
+                    pages: [{
+                        id: 'mainMenu', name: 'Main Menu', layout: 'singlePane',
+                        panes: [{
+                            id: 'pane1', type: 'list', content: 'music\nvideos\npictures\nsocial\nsettings',
+                            backgroundColor: '#1e1e1e', textColor: '#ffffff',
+                            flex: 1, fontSize: 32, fontWeight: 'normal', textAlign: 'left', listOrientation: 'horizontal', verticalAlign: 'middle'
+                        }]
+                    }],
+                    contentBlocks: {},
+                    programs: {}
+                }
+            };
+
+            // --- Modal Logic ---
+            const messageModal = document.getElementById('message-modal');
+            const modalText = document.getElementById('modal-text');
+            const modalClose = document.getElementById('modal-close');
+            
+            function showMessage(text) {
+                modalText.textContent = text;
+                messageModal.classList.remove('hidden');
+            }
+            modalClose.addEventListener('click', () => messageModal.classList.add('hidden'));
+
+            // --- Navigation ---
+            const tabs = document.querySelectorAll('.tab');
+            const tabLinks = document.querySelectorAll('.tab-link');
+            const pageContents = document.querySelectorAll('.page-content');
+            
+            function showTab(tabId) {
+                pageContents.forEach(page => page.classList.add('hidden'));
+                document.getElementById(tabId).classList.remove('hidden');
+                tabs.forEach(tab => {
+                    tab.classList.toggle('tab-active', tab.dataset.tab === tabId);
+                });
+            }
+
+            tabs.forEach(tab => tab.addEventListener('click', (e) => { e.preventDefault(); showTab(e.target.dataset.tab); }));
+            tabLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); showTab(e.target.dataset.tab); }));
+
+            // --- Builder UI References ---
+            const pagesContainer = document.getElementById('pages-container');
+            const contentBlocksContainer = document.getElementById('content-blocks-container');
+            const programsContainer = document.getElementById('programs-container');
+            const addPageBtn = document.getElementById('add-page');
+            const addContentBlockBtn = document.getElementById('add-content-block');
+            const addProgramBtn = document.getElementById('add-program');
+            const generateJsonBtn = document.getElementById('generate-json');
+            const jsonOutput = document.getElementById('json-output');
+            const builderPreview = document.getElementById('builder-preview');
+            const templateSelect = document.getElementById('template-select');
+            const globalBgInput = document.getElementById('global-bg');
+            const globalTextInput = document.getElementById('global-text');
+            const globalHighlightInput = document.getElementById('global-highlight');
+            const globalAccentInput = document.getElementById('global-accent');
+
+            function syncStateFromUI() {
+                // Sync global settings
+                Object.assign(appState.globalSettings, {
+                    backgroundColor: globalBgInput.value, textColor: globalTextInput.value,
+                    highlightColor: globalHighlightInput.value, accentBgColor: globalAccentInput.value
+                });
+
+                // Sync pages
+                appState.pages = Array.from(pagesContainer.querySelectorAll('.page-editor')).map(pageEl => {
+                    const page = {
+                        id: pageEl.querySelector('.page-id').value,
+                        name: pageEl.querySelector('.page-name').value,
+                        layout: pageEl.querySelector('.page-layout').value,
+                        panes: Array.from(pageEl.querySelectorAll('.pane-editor')).map(paneEl => {
+                            const paneData = {
+                                id: paneEl.dataset.id,
+                                type: paneEl.querySelector('.pane-type').value,
+                                content: paneEl.querySelector('.pane-content').value,
+                                backgroundColor: paneEl.querySelector('.pane-bg').value,
+                                textColor: paneEl.querySelector('.pane-text').value,
+                                flex: parseFloat(paneEl.querySelector('.pane-flex').value) || 1,
+                                fontSize: parseInt(paneEl.querySelector('.pane-font-size').value) || 16,
+                                fontWeight: paneEl.querySelector('.pane-font-weight').value || 'normal',
+                                textAlign: paneEl.querySelector('.pane-text-align').value || 'left',
+                                verticalAlign: paneEl.querySelector('.pane-vertical-align').value || 'top',
+                                paddingX: parseInt(paneEl.querySelector('.pane-padding-x').value) || 0,
+                                paddingY: parseInt(paneEl.querySelector('.pane-padding-y').value) || 0
+                            };
+                            if (paneData.type === 'list') {
+                                paneData.listOrientation = paneEl.querySelector('.pane-list-orientation').value;
+                            }
+                            return paneData;
+                        })
+                    };
+                    return page;
+                });
+                
+                // Sync content blocks
+                appState.contentBlocks = {};
+                document.querySelectorAll('.content-block-editor').forEach(blockEl => {
+                    const blockId = blockEl.querySelector('.content-block-id').value;
+                    if (blockId) {
+                        appState.contentBlocks[blockId] = {
+                            type: blockEl.querySelector('.pane-type').value,
+                            content: blockEl.querySelector('.pane-content').value,
+                            backgroundColor: blockEl.querySelector('.pane-bg').value,
+                            textColor: blockEl.querySelector('.pane-text').value,
+                            fontSize: parseInt(blockEl.querySelector('.pane-font-size').value) || 16,
+                            fontWeight: blockEl.querySelector('.pane-font-weight').value,
+                            textAlign: blockEl.querySelector('.pane-text-align').value,
+                            listOrientation: blockEl.querySelector('.pane-list-orientation')?.value,
+                            verticalAlign: blockEl.querySelector('.pane-vertical-align').value || 'top',
+                            paddingX: parseInt(blockEl.querySelector('.pane-padding-x').value) || 0,
+                            paddingY: parseInt(blockEl.querySelector('.pane-padding-y').value) || 0
+                        };
+                    }
+                });
+
+                // Sync programs
+                appState.programs = {};
+                document.querySelectorAll('.program-editor').forEach(progEl => {
+                    const progId = progEl.querySelector('.program-id').value;
+                    if (progId) {
+                        appState.programs[progId] = progEl.querySelector('.program-code').value;
+                    }
+                });
+
+                renderBuilderPreview();
+            }
+            
+            function syncUIFromState() {
+                Object.assign(globalBgInput, { value: appState.globalSettings.backgroundColor });
+                Object.assign(globalTextInput, { value: appState.globalSettings.textColor });
+                Object.assign(globalHighlightInput, { value: appState.globalSettings.highlightColor });
+                Object.assign(globalAccentInput, { value: appState.globalSettings.accentBgColor });
+                
+                pagesContainer.innerHTML = '';
+                appState.pages.forEach(page => createPageEditor(page));
+
+                contentBlocksContainer.innerHTML = '';
+                Object.entries(appState.contentBlocks).forEach(([id, block]) => createContentBlockEditor(id, block));
+
+                programsContainer.innerHTML = '';
+                Object.entries(appState.programs).forEach(([id, code]) => createProgramEditor(id, code));
+
+                renderBuilderPreview();
+            }
+
+            function createPaneEditor(pane = {}) {
+                const paneId = pane.id || `pane${Date.now()}${Math.random()}`;
+                const paneDiv = document.createElement('div');
+                paneDiv.className = 'pane-editor border-t pt-3 mt-3';
+                paneDiv.dataset.id = paneId;
+                paneDiv.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs">Type</label>
+                                <select class="pane-type mt-1 block w-full text-xs rounded-md border-gray-300 shadow-sm p-1">
+                                    <option value="list" ${pane.type === 'list' ? 'selected' : ''}>List</option>
+                                    <option value="text" ${pane.type === 'text' ? 'selected' : ''}>Text Block</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs">Flex Grow</label>
+                                <input type="number" class="pane-flex mt-1 block w-full text-xs rounded-md border-gray-300 shadow-sm p-1" value="${pane.flex || 1}" step="0.1">
+                            </div>
+                        </div>
+                        <div class="list-options-container" style="display: ${!pane.type || pane.type === 'list' ? 'block' : 'none'};">
+                             <label class="text-xs">List Orientation</label>
+                             <select class="pane-list-orientation mt-1 block w-full text-xs rounded-md border-gray-300 shadow-sm p-1">
+                                 <option value="vertical" ${!pane.listOrientation || pane.listOrientation === 'vertical' ? 'selected' : ''}>Vertical</option>
+                                 <option value="horizontal" ${pane.listOrientation === 'horizontal' ? 'selected' : ''}>Horizontal</option>
+                             </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-xs">Content (use ">", ">>", or ">>>")</label>
+                            <textarea class="pane-content mt-1 block w-full text-xs rounded-md border-gray-300 shadow-sm" rows="3">${pane.content || ''}</textarea>
+                        </div>
+                         <div class="grid grid-cols-2 gap-2">
+                            <div> <label class="text-xs">BG Color</label> <input type="color" class="pane-bg w-full h-7 rounded" value="${pane.backgroundColor || '#ffffff'}"></div>
+                            <div> <label class="text-xs">Text Color</label> <input type="color" class="pane-text w-full h-7 rounded" value="${pane.textColor || '#000000'}"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 col-span-2 border-t pt-2 mt-2">
+                            <div><label class="text-xs">Font Size</label><input type="number" class="pane-font-size mt-1 w-full text-xs p-1 border rounded" value="${pane.fontSize || 16}"></div>
+                            <div><label class="text-xs">Font Weight</label><select class="pane-font-weight mt-1 w-full text-xs p-1 border rounded"><option value="normal" ${pane.fontWeight === 'normal' || !pane.fontWeight ? 'selected' : ''}>Normal</option><option value="bold" ${pane.fontWeight === 'bold' ? 'selected' : ''}>Bold</option></select></div>
+                            <div><label class="text-xs">Text Align</label><select class="pane-text-align mt-1 w-full text-xs p-1 border rounded"><option value="left" ${pane.textAlign === 'left' || !pane.textAlign ? 'selected' : ''}>Left</option><option value="center" ${pane.textAlign === 'center' ? 'selected' : ''}>Center</option><option value="right" ${pane.textAlign === 'right' ? 'selected' : ''}>Right</option></select></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 col-span-2 border-t pt-2 mt-2">
+                            <div>
+                                <label class="text-xs">V-Align</label>
+                                <select class="pane-vertical-align mt-1 w-full text-xs p-1 border rounded">
+                                    <option value="top" ${pane.verticalAlign === 'top' || !pane.verticalAlign ? 'selected' : ''}>Top</option>
+                                    <option value="middle" ${pane.verticalAlign === 'middle' ? 'selected' : ''}>Middle</option>
+                                    <option value="bottom" ${pane.verticalAlign === 'bottom' ? 'selected' : ''}>Bottom</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs">Pad X (%)</label>
+                                <input type="number" class="pane-padding-x mt-1 w-full text-xs p-1 border rounded" value="${pane.paddingX || 0}">
+                            </div>
+                             <div>
+                                <label class="text-xs">Pad Y (%)</label>
+                                <input type="number" class="pane-padding-y mt-1 w-full text-xs p-1 border rounded" value="${pane.paddingY || 0}">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const typeSelect = paneDiv.querySelector('.pane-type');
+                const listOptionsContainer = paneDiv.querySelector('.list-options-container');
+                typeSelect.addEventListener('change', () => {
+                    listOptionsContainer.style.display = typeSelect.value === 'list' ? 'block' : 'none';
+                });
+                return paneDiv;
+            }
+
+            function createPageEditor(page = {}) {
+                const pageId = page.id || `page${Math.round(Date.now() / 1000)}`;
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'page-editor p-3 border rounded-md bg-gray-50';
+                pageDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-2"><input type="text" class="page-name font-semibold text-lg border-b w-2/3" value="${page.name || 'New Page'}"><button class="remove-item text-red-500 hover:text-red-700 text-sm">Remove</button></div>
+                    <div class="space-y-2">
+                         <div><label class="text-xs font-medium text-gray-700">Page ID (for linking)</label><input type="text" class="page-id mt-1 block w-full text-xs rounded-md border-gray-300 shadow-sm p-1" value="${pageId}"></div>
+                        <div><label class="text-xs font-medium text-gray-700">Layout</label><select class="page-layout mt-1 block w-full text-xs rounded-md border-gray-300 shadow-sm"><option value="singlePane" ${page.layout === 'singlePane' ? 'selected' : ''}>Single Pane</option><option value="twoPaneVertical" ${page.layout === 'twoPaneVertical' ? 'selected' : ''}>Two Panes (Vertical)</option><option value="twoPaneHorizontal" ${page.layout === 'twoPaneHorizontal' ? 'selected' : ''}>Two Panes (Horizontal)</option></select></div>
+                    </div>
+                    <div class="panes-container mt-2"></div>`;
+                
+                const panesContainer = pageDiv.querySelector('.panes-container');
+                const layoutSelect = pageDiv.querySelector('.page-layout');
+                function updatePanes() {
+                    panesContainer.innerHTML = '';
+                    const paneCount = layoutSelect.value === 'singlePane' ? 1 : 2;
+                    for (let i = 0; i < paneCount; i++) {
+                        panesContainer.appendChild(createPaneEditor(page.panes ? page.panes[i] : {}));
+                    }
+                }
+                layoutSelect.addEventListener('change', updatePanes);
+                pageDiv.querySelector('.remove-item').addEventListener('click', () => { pageDiv.remove(); syncStateFromUI(); });
+                pagesContainer.appendChild(pageDiv);
+                updatePanes();
+            }
+            
+            function createContentBlockEditor(id = '', block = {}) {
+                 const blockDiv = document.createElement('div');
+                 blockDiv.className = 'content-block-editor p-3 border rounded-md bg-gray-50';
+                 blockDiv.innerHTML = `<div class="flex justify-between items-center mb-2"><input type="text" class="content-block-id font-semibold text-lg border-b w-2/3" value="${id}" placeholder="Content Block ID"><button class="remove-item text-red-500 hover:text-red-700 text-sm">Remove</button></div>`;
+                 blockDiv.appendChild(createPaneEditor(block));
+                 blockDiv.querySelector('.remove-item').addEventListener('click', () => { blockDiv.remove(); syncStateFromUI(); });
+                 contentBlocksContainer.appendChild(blockDiv);
+            }
+            
+            function createProgramEditor(id = '', code = '') {
+                const progDiv = document.createElement('div');
+                progDiv.className = 'program-editor p-3 border rounded-md bg-gray-50';
+                progDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-2"><input type="text" class="program-id font-semibold text-lg border-b w-2/3" value="${id}" placeholder="Program Name"><button class="remove-item text-red-500 hover:text-red-700 text-sm">Remove</button></div>
+                    <div><label class="text-xs">Code (e.g., showMessage('Hello'))</label><textarea class="program-code mt-1 w-full font-mono text-xs p-1 border rounded" rows="3">${code}</textarea></div>`;
+                progDiv.querySelector('.remove-item').addEventListener('click', () => { progDiv.remove(); syncStateFromUI(); });
+                programsContainer.appendChild(progDiv);
+            }
+
+            function renderBuilderPreview() {
+                const firstPageId = appState.pages.length > 0 ? appState.pages[0].id : null;
+                renderTheme(builderPreview, appState, firstPageId);
+            }
+            
+            document.querySelector('#builder').addEventListener('input', syncStateFromUI);
+            addPageBtn.addEventListener('click', () => createPageEditor());
+            addContentBlockBtn.addEventListener('click', () => createContentBlockEditor());
+            addProgramBtn.addEventListener('click', () => createProgramEditor());
+            generateJsonBtn.addEventListener('click', () => {
+                syncStateFromUI();
+                jsonOutput.value = JSON.stringify(appState, null, 2);
+            });
+            templateSelect.addEventListener('change', () => {
+                const selected = templateSelect.value;
+                // Always reset complex state parts when changing templates
+                appState.pages = [];
+                appState.contentBlocks = {};
+                appState.programs = {};
+
+                if (templates[selected]) {
+                    // Load template data by deep copying
+                    Object.assign(appState, JSON.parse(JSON.stringify(templates[selected]))); 
+                } else {
+                    // Reset global settings for the "Custom" option
+                    Object.assign(appState.globalSettings, {
+                        backgroundColor: '#ffffff', textColor: '#000000',
+                        highlightColor: '#ffffff', accentBgColor: '#007aff'
+                    });
+                }
+                syncUIFromState();
+            });
+
+            // --- Viewer & Renderer Logic ---
+            const jsonInput = document.getElementById('json-input');
+            const loadThemeBtn = document.getElementById('load-theme');
+            const themeViewer = document.getElementById('theme-viewer');
+
+            function renderPaneContent(paneEl, paneData, theme) {
+                // The paneEl is now a flex container from renderTheme
+                // It handles alignment. We create an inner wrapper for padding and content.
+                const contentWrapper = document.createElement('div');
+                Object.assign(contentWrapper.style, {
+                    width: '100%',
+                    padding: `${paneData.paddingY || 0}% ${paneData.paddingX || 0}%`,
+                    boxSizing: 'border-box',
+                    fontSize: `${paneData.fontSize || 16}px`,
+                    fontWeight: paneData.fontWeight || 'normal',
+                    textAlign: paneData.textAlign || 'left'
+                });
+
+                if (paneData.type === 'list') {
+                    const ul = document.createElement('ul');
+                    ul.className = 'list-none m-0 p-0';
+                    if (paneData.listOrientation === 'horizontal') {
+                        Object.assign(ul.style, { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' });
+                    }
+                    paneData.content.split('\n').filter(i => i.trim() !== '').forEach(itemText => {
+                        ul.appendChild(createListItem(itemText, paneData, theme, paneEl.parentElement));
+                    });
+                    contentWrapper.appendChild(ul);
+                } else if (paneData.type === 'text') {
+                    const textDiv = document.createElement('div');
+                    textDiv.style.whiteSpace = 'pre-wrap';
+                    textDiv.textContent = paneData.content;
+                    contentWrapper.appendChild(textDiv);
+                }
+                
+                paneEl.innerHTML = ''; // Clear previous content
+                paneEl.appendChild(contentWrapper);
+            }
+
+            function createListItem(itemText, paneData, theme, container) {
+                const li = document.createElement('li');
+                li.style.padding = '0.5rem';
+                li.style.cursor = 'pointer';
+
+                const programMatch = itemText.match(/^(.*)>>>\s*(.*)$/);
+                const paneMatch = itemText.match(/^(.*)>>\s*(.*)$/);
+                const pageMatch = itemText.match(/^(.*)>\s*(.*)$/);
+
+                let text, action;
+
+                if (programMatch) {
+                    text = programMatch[1].trim();
+                    const programId = programMatch[2].trim();
+                    action = () => {
+                        const programCode = theme.programs[programId];
+                        if (programCode) {
+                            try {
+                                new Function('theme', 'showMessage', programCode)(theme, showMessage);
+                            } catch (e) {
+                                console.error(`Error in program '${programId}':`, e);
+                                showMessage(`Error executing program: ${e.message}`);
+                            }
+                        } else {
+                            showMessage(`Program "${programId}" not found.`);
+                        }
+                    };
+                } else if (paneMatch) {
+                    text = paneMatch[1].trim();
+                    const blockId = paneMatch[2].trim();
+                    action = () => {
+                        const targetPane = container.children[1];
+                        const blockData = theme.contentBlocks[blockId];
+                        if (targetPane && blockData) {
+                            renderPaneContent(targetPane, blockData, theme);
+                        } else {
+                            if (!targetPane) console.error("Could not find second pane for '>>' operation.");
+                            if (!blockData) showMessage(`Content block "${blockId}" not found.`);
+                        }
+                    };
+                } else if (pageMatch) {
+                    text = pageMatch[1].trim();
+                    const pageId = pageMatch[2].trim();
+                    action = () => renderTheme(container, theme, pageId);
+                } else {
+                    text = itemText;
+                    li.style.cursor = 'default';
+                }
+                
+                li.textContent = text;
+                if(action) li.addEventListener('click', action);
+
+                li.addEventListener('mouseenter', () => {
+                    li.style.backgroundColor = theme.globalSettings.accentBgColor;
+                    li.style.color = theme.globalSettings.highlightColor;
+                });
+                li.addEventListener('mouseleave', () => {
+                    li.style.backgroundColor = 'transparent';
+                    li.style.color = paneData.textColor;
+                });
+                return li;
+            }
+
+            function renderTheme(container, theme, pageId) {
+                container.innerHTML = '';
+                if (!theme || !theme.pages || !theme.pages.length === 0) {
+                    container.innerHTML = `<div class="text-gray-400">No pages to display.</div>`; return;
+                }
+                const pageToRender = theme.pages.find(p => p.id === pageId);
+                if (!pageToRender) {
+                    container.innerHTML = `<div class="text-gray-400">Page "${pageId}" not found.</div>`; return;
+                }
+
+                Object.assign(container.style, {
+                    backgroundColor: theme.globalSettings.backgroundColor,
+                    color: theme.globalSettings.textColor,
+                    display: 'flex',
+                    flexDirection: pageToRender.layout === 'twoPaneVertical' ? 'row' : 'column'
+                });
+
+                pageToRender.panes.forEach((paneData) => {
+                    const paneEl = document.createElement('div');
+                    Object.assign(paneEl.style, {
+                        flex: paneData.flex || '1',
+                        overflow: 'auto',
+                        padding: '1rem',
+                        display: 'flex',
+                        backgroundColor: paneData.backgroundColor,
+                        color: paneData.textColor,
+                        alignItems: { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[paneData.verticalAlign || 'top']
+                    });
+                    
+                    container.appendChild(paneEl);
+                    renderPaneContent(paneEl, paneData, theme);
+                });
+            }
+            
+            loadThemeBtn.addEventListener('click', () => {
+                try {
+                    const themeData = JSON.parse(jsonInput.value);
+                    const initialPage = themeData.pages.length > 0 ? themeData.pages[0].id : null;
+                    renderTheme(themeViewer, themeData, initialPage);
+                } catch (e) {
+                    themeViewer.innerHTML = `<div class="text-red-500 p-4">Error parsing JSON: ${e.message}</div>`;
+                    themeViewer.style.backgroundColor = '#fff';
+                }
+            });
+
+            // --- Initial State ---
+            showTab('index');
+        });
+    </script>
+</body>
+</html>
+
